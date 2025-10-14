@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juego del Ahorcado</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0b1223" />
+  <style>
+    body { font-family: 'Inter', sans-serif; touch-action: manipulation; }
+    .ahorcado-svg .parte { stroke: #cbd5e1; stroke-width: 4; fill: transparent; stroke-linecap: round; transition: opacity 0.25s ease-in-out; }
+    .tecla:disabled { opacity: 0.4; cursor: not-allowed; }
+  </style>
+</head>
+<body class="bg-black text-slate-100 min-h-screen p-4 flex flex-col items-center">
+  <div class="w-full max-w-2xl text-center">
+    <h1 class="text-4xl md:text-5xl font-bold mb-2 text-yellow-300 tracking-wider">Juego del Ahorcado</h1>
+    <p class="text-slate-300 mb-4">Adivina la palabra oculta antes de que sea tarde.</p>
+
+    <div class="flex gap-3 justify-center mb-4">
+      <button id="btn-nueva" class="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg">Nueva palabra</button>
+      <button id="btn-pista" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-4 py-2 rounded-lg">Pista</button>
+      <span id="stats" class="text-sm text-slate-400 self-center"></span>
+    </div>
+
+    <div class="flex justify-center items-center mb-6 h-48 md:h-64">
+      <svg width="200" height="250" viewBox="0 0 200 250" class="ahorcado-svg">
+        <line class="parte" x1="10" y1="230" x2="130" y2="230"></line>
+        <line class="parte" x1="70" y1="230" x2="70" y2="20"></line>
+        <line class="parte" x1="70" y1="20" x2="170" y2="20"></line>
+        <line class="parte" x1="170" y1="20" x2="170" y2="50"></line>
+        <circle id="cabeza" class="parte opacity-0" cx="170" cy="80" r="30"></circle>
+        <line id="cuerpo" class="parte opacity-0" x1="170" y1="110" x2="170" y2="170"></line>
+        <line id="brazo-izq" class="parte opacity-0" x1="170" y1="130" x2="140" y2="110"></line>
+        <line id="brazo-der" class="parte opacity-0" x1="170" y1="130" x2="200" y2="110"></line>
+        <line id="pierna-izq" class="parte opacity-0" x1="170" y1="170" x2="140" y2="200"></line>
+        <line id="pierna-der" class="parte opacity-0" x1="170" y1="170" x2="200" y2="200"></line>
+      </svg>
+    </div>
+
+    <div id="palabra-display" class="flex justify-center gap-2 md:gap-4 mb-6 text-3xl md:text-5xl font-mono tracking-widest h-12"></div>
+    <div id="pista-texto" class="text-slate-400 mb-4 text-sm"></div>
+
+    <div id="teclado" class="flex flex-col items-center gap-2 max-w-lg mx-auto"></div>
+  </div>
+
+  <div id="modal-fin-juego" class="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center hidden">
+    <div class="bg-gray-900 rounded-lg shadow-2xl p-8 text-center w-11/12 max-w-md">
+      <h2 id="modal-titulo" class="text-3xl font-bold mb-4"></h2>
+      <p id="modal-texto" class="mb-6"></p>
+      <button id="boton-jugar-otra-vez" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-3 px-6 rounded-lg text-lg transition duration-300">Jugar de Nuevo</button>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js'); }
+
+    const palabraDisplay = document.getElementById('palabra-display');
+    const tecladoDiv = document.getElementById('teclado');
+    const modalFinJuego = document.getElementById('modal-fin-juego');
+    const modalTitulo = document.getElementById('modal-titulo');
+    const modalTexto = document.getElementById('modal-texto');
+    const botonJugarOtraVez = document.getElementById('boton-jugar-otra-vez');
+    const btnNueva = document.getElementById('btn-nueva');
+    const btnPista = document.getElementById('btn-pista');
+    const pistaTexto = document.getElementById('pista-texto');
+    const statsEl = document.getElementById('stats');
+
+    const partesCuerpo = ['cabeza', 'cuerpo', 'brazo-izq', 'brazo-der', 'pierna-izq', 'pierna-der'];
+    const PALABRAS = {
+      list: ["ACANTILADO", "ACUARELA", "AEROPUERTO", "AGUILA", "ALBERGUE", "ALFAJOR", "ALGORITMO", "ALPACA", "ARCHIVADOR", "ARCOIRIS", "AREPA", "ARPEGIO", "ARQUITECTURA", "ASADO", "ASTRONAUTA", "AURICULAR", "AURORA", "AVENTURA", "BAILARIN", "BASQUET", "BATERIA", "BIBLIOTECA", "BICICLETA", "BILLETE", "BOSQUE", "BROWNIE", "CALEFACTOR", "CALEIDOSCOPIO", "CAMELLO", "CANGURO", "CARGADOR", "CASCADA", "CENOTE", "CHOCOLATE", "CHURRO", "CICLISMO", "CIENTIFICO", "CIRCUITO", "COCODRILO", "COMPILADOR", "CRIPTOGRAFIA", "CUADERNO", "CUANTICO", "DESIERTO", "DINAMICA", "DULCEDELECHE", "ELECTROENCEFALOGRAFISTA", "ELEFANTE", "EMPANADA", "ENSALADA", "ENTROPIA", "ESCRITORIO", "ESCULTURA", "ESGRIMA", "ESTALACTITA", "ESTRELLA", "ESTRELLATO", "FANTASMA", "FILOSOFIA", "FLAMENCO", "FRONTERA", "FUTBOL", "GALAXIA", "GAVILAN", "GLACIAR", "GOLONDRINA", "GUITARRA", "HAMBURGUESA", "HARDWARE", "HELADO", "HELICOPTERO", "HERRAMIENTA", "HIPOPOTOMONSTROSESQUIPEDALIOFOBIA", "HOSPEDAJE", "HURACAN", "IDIOSINCRASIA", "IMPRESORA", "INERCIA", "ITINERARIO", "JIRAFA", "LAGUNA", "LAPICERA", "LIENZO", "LLANURA", "MADRIGUERA", "MANDO", "MANGLE", "MAPAMUNDI", "MARATON", "MARIPOSA", "MATE", "MEDUSA", "MICROCHIP", "MICROSCOPIO", "MILANESA", "MOCHILA", "MONTANA", "MURCIELAGO", "MUSICO", "NATACION", "NEBLINA", "NEUTRINO", "OCEANO", "OFICINISTA", "ORDENADOR", "ORNITORRINCO", "ORQUESTA", "OTORRINOLARINGOLOGO", "PAELLA", "PANTALLA", "PARAGUAS", "PARALELEPIPEDO", "PASTEL", "PATINAJE", "PINGUINO", "PIZZA", "PLANETA", "PROGRAMACION", "PSICOLOGIA", "RAMEN", "ROBOTO", "RUGBY", "SATELITE", "SAXOFON", "SENSOR", "SERPIENTE", "SINFONIA", "SOFTWARE", "SUBMARINO", "SUSHI", "TACOS", "TECLADO", "TELEFONO", "TELETRABAJO", "TELEVISION", "TENIS", "TERMOSTATO", "TERREMOTO", "TIBURON", "TORNADO", "TORRENTE", "TORTILLA", "UNIVERSO", "VARIABLE", "VEHICULO", "VOLCAN", "XILOFONO", "YERBA", "ZANAHORIA", "ZEPPELIN", "ÑOQUIS"],
+      pistas: {"OFICINISTA": "Tu hábitat natural 😉", "ASADO": "Plan de fin de semana clásico", "MATE": "Amargo o dulce, siempre acompaña", "EMPANADA": "Puede ser salteña o de jamón y queso", "BIBLIOTECA": "Silencio, por favor", "GUITARRA": "Se afina antes de tocar"}
+    };
+
+    let palabraSecreta = '';
+    let letrasAdivinadas = new Set();
+    let intentosFallidos = 0;
+    const maxIntentos = 6;
+
+    const est = JSON.parse(localStorage.getItem('ahorcado_stats') || '{"w":0,"l":0}');
+
+    function actualizarStatsUI() { statsEl.textContent = `Ganadas: ${est.w} · Perdidas: ${est.l}`; }
+    actualizarStatsUI();
+
+    function elegirPalabra() { return PALABRAS.list[Math.floor(Math.random() * PALABRAS.list.length)]; }
+
+    function iniciarJuego(nueva=true) {
+      intentosFallidos = 0;
+      letrasAdivinadas = new Set();
+      palabraSecreta = elegirPalabra();
+      pistaTexto.textContent = '';
+      document.querySelectorAll('.ahorcado-svg .parte').forEach(el => el.classList.add('opacity-0'));
+      modalFinJuego.classList.add('hidden');
+      mostrarPalabra();
+      crearTeclado();
+    }
+
+    function normalizarLetra(l) {
+      l = l.toUpperCase();
+      const map = { "Á":"A","É":"E","Í":"I","Ó":"O","Ú":"U" };
+      return map[l] || l;
+    }
+
+    function mostrarPalabra() {
+      palabraDisplay.innerHTML = palabraSecreta
+        .split('')
+        .map(letra => `
+          <div class="w-10 md:w-12 h-full flex items-center justify-center border-b-4 ${letrasAdivinadas.has(letra) ? 'border-yellow-300' : 'border-gray-700'}">
+            ${letrasAdivinadas.has(letra) ? letra : ''}
+          </div>
+        `)
+        .join('');
+
+      const adiv = palabraSecreta.split('').every(l => letrasAdivinadas.has(l));
+      if (adiv) finalizarJuego(true);
+    }
+
+    function crearTeclado() {
+      tecladoDiv.innerHTML = '';
+      const filas = ['QWERTYUIOP','ASDFGHJKLÑ','ZXCVBNM'];
+      filas.forEach(f => {
+        const filaDiv = document.createElement('div');
+        filaDiv.className = 'flex justify-center gap-1 sm:gap-2';
+        f.split('').forEach(letra => {
+          const boton = document.createElement('button');
+          boton.textContent = letra;
+          boton.className = 'tecla bg-gray-800 hover:bg-gray-700 text-slate-100 font-bold py-3 px-2 sm:px-3 md:px-4 rounded-md transition duration-200 text-base sm:text-lg';
+          boton.addEventListener('click', () => manejarIntento(letra, boton));
+          filaDiv.appendChild(boton);
+        });
+        tecladoDiv.appendChild(filaDiv);
+      });
+    }
+
+    function manejarIntento(letra, boton=null) {
+      letra = normalizarLetra(letra);
+      if (letrasAdivinadas.has(letra) || intentosFallidos >= maxIntentos) return;
+      if (boton) boton.disabled = true;
+
+      if (palabraSecreta.includes(letra)) {
+        letrasAdivinadas.add(letra);
+        mostrarPalabra();
+      } else {
+        intentosFallidos++;
+        dibujarAhorcado();
+      }
+    }
+
+    function dibujarAhorcado() {
+      if (intentosFallidos > 0) {
+        const parte = document.getElementById(partesCuerpo[intentosFallidos - 1]);
+        if (parte) parte.classList.remove('opacity-0');
+      }
+      if (intentosFallidos >= maxIntentos) finalizarJuego(false);
+    }
+
+    function finalizarJuego(victoria) {
+      setTimeout(() => {
+        if (victoria) {
+          modalTitulo.textContent = '¡Felicidades!';
+          modalTitulo.classList.remove('text-red-400');
+          modalTitulo.classList.add('text-yellow-300');
+          modalTexto.textContent = 'Has adivinado la palabra correctamente.';
+          est.w++; localStorage.setItem('ahorcado_stats', JSON.stringify(est));
+        } else {
+          modalTitulo.textContent = '¡Fin del juego!';
+          modalTitulo.classList.remove('text-yellow-300');
+          modalTitulo.classList.add('text-red-400');
+          modalTexto.textContent = `La palabra secreta era: ${palabraSecreta}`;
+          est.l++; localStorage.setItem('ahorcado_stats', JSON.stringify(est));
+        }
+        actualizarStatsUI();
+        modalFinJuego.classList.remove('hidden');
+      }, 300);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      const l = e.key.toUpperCase();
+      if (/^[A-ZÑÁÉÍÓÚ]$/.test(l)) {
+        const btn = Array.from(document.querySelectorAll('.tecla')).find(b => b.textContent === normalizarLetra(l));
+        manejarIntento(l, btn || null);
+      }
+    });
+
+    botonJugarOtraVez.addEventListener('click', () => iniciarJuego());
+    btnNueva.addEventListener('click', () => iniciarJuego());
+    btnPista.addEventListener('click', () => {
+      const p = PALABRAS.pistas[palabraSecreta];
+      pistaTexto.textContent = p ? ('Pista: ' + p) : 'Pista: empieza con ' + palabraSecreta[0] + ' y tiene ' + palabraSecreta.length + ' letras.';
+    });
+
+    iniciarJuego();
+  </script>
+</body>
+</html>

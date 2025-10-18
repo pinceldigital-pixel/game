@@ -250,6 +250,7 @@ setInterval(updateHud, 250);
 
 // Controles
 const keys = {};
+let pointerActive = false;
 let touchDir = 0;
 document.addEventListener('keydown', (e) => {
   keys[e.code] = true;
@@ -281,3 +282,24 @@ const ro = new ResizeObserver(() => {
   // Nada: el canvas usa CSS para escalar manteniendo resolución interna alta.
 });
 ro.observe(canvas);
+// --- Controles táctiles/drag por canvas (Pointer Events) ---
+function setPlayerFromPointer(e){
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const scaleY = H / rect.height;
+  const y = (e.clientY - rect.top) * scaleY;
+  state.player.y = clamp(y - state.player.h/2, 0, H - state.player.h);
+}
+canvas.addEventListener('pointerdown', (e)=>{ pointerActive = true; setPlayerFromPointer(e); }, {passive:false});
+canvas.addEventListener('pointermove', (e)=>{ if(pointerActive) setPlayerFromPointer(e); }, {passive:false});
+canvas.addEventListener('pointerup',   ()=>{ pointerActive = false; }, {passive:false});
+canvas.addEventListener('pointercancel',()=>{ pointerActive = false; }, {passive:false});
+
+// Evita scroll al usar botones táctiles
+btnUp.addEventListener('touchstart', (e)=>{ e.preventDefault(); touchDir = -1; }, {passive:false});
+btnDown.addEventListener('touchstart', (e)=>{ e.preventDefault(); touchDir = 1; }, {passive:false});
+['touchend','touchcancel'].forEach(ev=>{
+  btnUp.addEventListener(ev, (e)=>{ e.preventDefault(); touchDir = 0; }, {passive:false});
+  btnDown.addEventListener(ev, (e)=>{ e.preventDefault(); touchDir = 0; }, {passive:false});
+});
+

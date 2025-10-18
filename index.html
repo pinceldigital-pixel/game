@@ -18,10 +18,10 @@
     #installBtn, #resetBtn, #pauseBtn { border:1px solid #2a2f4a; background:#14182a; color:#e8e8f0; padding:8px 12px; border-radius:999px; cursor:pointer }
     #installBtn[hidden] { display:none }
     main { display:grid; place-items:center; padding:12px }
-    canvas { width:min(96vw, 720px); aspect-ratio: 16/10; background:#0f1426; border:1px solid #1f2440; border-radius:18px; box-shadow:0 10px 35px rgba(0,0,0,.35), inset 0 0 0 1px #0c1030 }
+    canvas { width:min(96vw, 720px); aspect-ratio: 16/10; background:#0f1426; border:1px solid #1f2440; border-radius:18px; box-shadow:0 10px 35px rgba(0,0,0,.35), inset 0 0 0 1px #0c1030; touch-action:none }
     .hud { margin:10px 0; font-family: 'Press Start 2P', system-ui, monospace; font-weight:400; letter-spacing:1px; font-size:14px;}
     .touch { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px; width:min(96vw, 720px); }
-    .touch button { padding:16px 12px; border-radius:14px; border:1px solid #2a2f4a; background:#0f1426; color:#e8e8f0; font-size:16px }
+    .touch button { padding:16px 12px; border-radius:14px; border:1px solid #2a2f4a; background:#0f1426; color:#e8e8f0; font-size:16px; touch-action:none }
     footer { text-align:center; opacity:.7; font-size:12px; padding:16px }
   
     /* Estética arcade criolla */

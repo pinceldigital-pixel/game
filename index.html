@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pong PWA</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0b18">
+  <style>
+    :root { color-scheme: dark; }
+    body { margin:0; font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial; background:#0b0b18; color:#e8e8f0; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:12px 16px; border-bottom:1px solid #22263a; position:sticky; top:0; background:#0b0b18e6; backdrop-filter:saturate(1.2) blur(6px)}
+    h1 { font-family: 'Press Start 2P', system-ui, monospace; font-size:18px; margin:0; letter-spacing:1px; }
+    #installBtn, #resetBtn, #pauseBtn { border:1px solid #2a2f4a; background:#14182a; color:#e8e8f0; padding:8px 12px; border-radius:999px; cursor:pointer }
+    #installBtn[hidden] { display:none }
+    main { display:grid; place-items:center; padding:12px }
+    canvas { width:min(96vw, 720px); aspect-ratio: 16/10; background:#0f1426; border:1px solid #1f2440; border-radius:18px; box-shadow:0 10px 35px rgba(0,0,0,.35), inset 0 0 0 1px #0c1030 }
+    .hud { margin:10px 0; font-family: 'Press Start 2P', system-ui, monospace; font-weight:400; letter-spacing:1px; font-size:14px;}
+    .touch { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px; width:min(96vw, 720px); }
+    .touch button { padding:16px 12px; border-radius:14px; border:1px solid #2a2f4a; background:#0f1426; color:#e8e8f0; font-size:16px }
+    footer { text-align:center; opacity:.7; font-size:12px; padding:16px }
+  
+    /* Estética arcade criolla */
+    body {
+      background:
+        radial-gradient(1200px 800px at 60% -20%, rgba(0,180,255,.12), transparent 60%),
+        radial-gradient(1000px 700px at 10% 120%, rgba(255,205,0,.10), transparent 60%),
+        #0b0b18;
+    }
+    header h1 { text-shadow: 0 0 10px rgba(0,200,255,.3) }
+    .hud { text-shadow: 0 0 8px rgba(255,255,255,.12) }
+    canvas { image-rendering: pixelated; position: relative; }
+  </style>
+
+</head>
+<body>
+  <header>
+    <h1>🟦 Pong PWA</h1>
+    <div style="display:flex; gap:8px">
+      <button id="pauseBtn" title="Pausar/Reanudar">⏸️ Pausa</button>
+      <button id="resetBtn" title="Reiniciar">🔄 Reiniciar</button>
+      <button id="installBtn" hidden>➕ Instalar</button>
+    </div>
+  </header>
+  <main>
+    <div class="hud" id="hud">Puntaje — Tú 0 : 0 CPU</div>
+    <canvas id="game" width="960" height="600"></canvas>
+    <div class="touch">
+      <button id="btnUp">⬆️ Subir</button>
+      <button id="btnDown">⬇️ Bajar</button>
+    </div>
+  </main>
+  <footer>Hecho para Daniel • Funciona offline • Controles: ↑/↓ o W/S • Toques en móviles</footer>
+  <script src="main.js"></script>
+</body>
+</html>
